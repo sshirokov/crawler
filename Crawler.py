@@ -1,12 +1,14 @@
 #!/usr/bin/env python
+import re
 from Browser import Browser
 
 def search_object(object, name = None, value = None):
     def matcher(searcher):
         if callable(searcher): return searcher
         if searcher == None: return lambda value: True
-        if str(searcher) != searcher: return lambda value: re.match(searcher, value)
-        return lambda value: searcher in value
+        if type(searcher) == type(re.compile('')): return lambda value: re.match(searcher, value)
+        if str(searcher) == searcher: return lambda value: searcher in value
+        else: return lambda value: searcher == value
     if not name and not value: raise Exception("Must search by name or value")
     name, value = matcher(name), matcher(value)
     return [(i, getattr(object, i)) for i in dir(object) if name(i) and value(getattr(object, i))]
