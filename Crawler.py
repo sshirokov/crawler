@@ -1,7 +1,22 @@
 #!/usr/bin/env python
 from Browser import Browser
 
+def search_object(object, name = None, value = None):
+    def matcher(searcher):
+        if callable(searcher): return searcher
+        if searcher == None: return lambda value: True
+        if str(searcher) != searcher: return lambda value: re.match(searcher, value)
+        return lambda value: searcher in value
+    if not name and not value: raise Exception("Must search by name or value")
+    name, value = matcher(name), matcher(value)
+    return [(i, getattr(object, i)) for i in dir(object) if name(i) and value(getattr(object, i))]
+    
+
 class Crawler(Browser):
+    class Styles:
+        DEPTH_FIRST = 1
+        BREADTH_FIRST = 2
+        
     def __init__(self, seed):
         super(Crawler, self).__init__()
         self.addHeader("Host", "www.google.com")
@@ -11,7 +26,7 @@ class Crawler(Browser):
         self.request("http://www.google.com") #TODO: Extract from seed
         self.seed = seed
 
-    def crawl(self):
+    def crawl(self, depth = 1, style = Styles.BREADTH_FIRST):
         return self.links(self.request(self.seed),
                           exclude = 'google\.com',
                           require = '^http')
