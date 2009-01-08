@@ -28,18 +28,34 @@ class Crawler(Browser):
         self.request("http://www.google.com") #TODO: Extract from seed
         self.seed = seed
 
-    def crawl(self, depth = 1, style = Styles.BREADTH_FIRST):
-        if depth <= 0: return list()
+    def crawl(self, do, depth = 1, style = Styles.BREADTH_FIRST):
+        if depth <= 0:
+            print "Exiting recursion with [%s]" % self.seed
+            return list()
         print "crawling('%(seed)s', depth = %(depth)d, style = %(style)s)" % {
             'seed': self.seed,
             'depth': depth,
             'style': list(search_object(self.Styles, value = style).pop())[0]
         }
-        return self.links(self.request(self.seed),
+        do(self.seed)
+        links = self.links(self.request(self.seed),
                           exclude = 'google\.com',
                           require = '^http')
+            
+        if style == self.Styles.BREADTH_FIRST:
+            map(do, links)
+            map(lambda link: Crawler(link).crawl(do, depth - 1, style), links)
+        elif style == self.Styles.DEPTH_FIRST:
+            def visit(link):
+                do(link)
+                Crawler(link).crawl(do, depth - 1, style)
+            map(visit, links)
+            
+        return list()
         
 def main():
+    def doer(value):
+        print "Doing [%s]" % value
     crawl = Crawler('http://www.google.com/search?hl=en&q=submit+comment&btnG=Google+Search&aq=f&oq=')
-    print "Found %d links" % len(crawl.crawl())
+    print "Found %d links" % len(crawl.crawl(doer, style = Crawler.Styles.DEPTH_FIRST))
 if __name__ == '__main__': main()
