@@ -29,11 +29,17 @@ class Crawler(Browser):
         self.seed = seed
 
     def crawl(self, depth = 1, style = Styles.BREADTH_FIRST):
+        if depth <= 0: return list()
+        print "crawling('%(seed)s', depth = %(depth)d, style = %(style)s)" % {
+            'seed': self.seed,
+            'depth': depth,
+            'style': list(search_object(self.Styles, value = style).pop())[0]
+        }
         return self.links(self.request(self.seed),
                           exclude = 'google\.com',
                           require = '^http')
         
 def main():
     crawl = Crawler('http://www.google.com/search?hl=en&q=submit+comment&btnG=Google+Search&aq=f&oq=')
-    print crawl.crawl()
+    print "Found %d links" % len(crawl.crawl())
 if __name__ == '__main__': main()
