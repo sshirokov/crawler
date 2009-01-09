@@ -32,10 +32,11 @@ class Crawler(Browser):
         self.addHeader("Accept", "text/html")
         if referer: self.addHeader("Referer", referer)
 
+
         self.seed = seed
 
         self.request = make_chain(self.request, self.update_referer, merge = lambda returns: returns[0])
-        print "Constructed(seed = '%s', referer = '%s')" % (seed, referer)
+        print "Constructed(seed = '%s', referer = '%s')" % (seed, referer or "None")
         
     def update_referer(self, url, params = None):
         self.addHeader("Referer", url)
@@ -70,5 +71,5 @@ def main():
     def doer(value):
         print "Doing [%s]" % value
     crawl = Crawler('http://www.google.com/search?hl=en&q=submit+comment&btnG=Google+Search&aq=f&oq=')
-    print "Found %d links" % len(crawl.crawl(doer, depth = 1, style = Crawler.Styles.BREADTH_FIRST))
+    print "Found %d links" % len(crawl.crawl(doer, depth = 2, style = Crawler.Styles.BREADTH_FIRST))
 if __name__ == '__main__': main()
