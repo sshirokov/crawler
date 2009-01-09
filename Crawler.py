@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys, re
+from urllib2 import HTTPError
 from Browser import Browser
 
 def search_object(object, name = None, value = None):
@@ -55,12 +56,22 @@ class Crawler(Browser):
         links = [link['href'] for link in links if link.get('href')]
             
         if style == self.Styles.BREADTH_FIRST:
+            def visit(link):
+                try:
+                    return Crawler(link, referer = self.seed).crawl(do, depth - 1, style)
+                except HTTPError, e:
+                    sys.stderr.write("Warning: Error(%s) on '%s'" % (e, link))
+                    return 0
             map(do, links)
-            total = sum(map(lambda link: Crawler(link, referer = self.seed).crawl(do, depth - 1, style), links))
+            total = sum(map(visit, links))
         elif style == self.Styles.DEPTH_FIRST:
             def visit(link):
                 do(link)
-                return Crawler(link, referer = self.seed).crawl(do, depth - 1, style)
+                try:
+                    return Crawler(link, referer = self.seed).crawl(do, depth - 1, style)
+                except HTTPError, e:
+                    sys.stderr.write("Warning: Error(%s) on '%s'" % (e, link))
+                    return 0
             total = sum(map(visit, links))
             
         return len(links) + total
