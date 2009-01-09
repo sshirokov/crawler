@@ -42,13 +42,12 @@ class Crawler(Browser):
     def crawl(self, do, depth = 1, style = Styles.BREADTH_FIRST):
         if depth <= 0:
             print "Exiting recursion with [%s]" % self.seed
-            return list()
+            return 0
         print "crawling('%(seed)s', depth = %(depth)d, style = %(style)s)" % {
             'seed': self.seed,
             'depth': depth,
             'style': list(search_object(self.Styles, value = style).pop())[0]
         }
-        do(self.seed)
         links = self.links(self.request(self.seed),
                           exclude = 'google\.com',
                           require = '^http')
@@ -56,18 +55,18 @@ class Crawler(Browser):
             
         if style == self.Styles.BREADTH_FIRST:
             map(do, links)
-            map(lambda link: Crawler(link, referer = self.seed).crawl(do, depth - 1, style), links)
+            total = sum(map(lambda link: Crawler(link, referer = self.seed).crawl(do, depth - 1, style), links))
         elif style == self.Styles.DEPTH_FIRST:
             def visit(link):
                 do(link)
-                Crawler(link, referer = self.seed).crawl(do, depth - 1, style)
-            map(visit, links)
+                return Crawler(link, referer = self.seed).crawl(do, depth - 1, style)
+            total = sum(map(visit, links))
             
-        return list()
+        return len(links) + total
         
 def main():
     def doer(value):
         print "Doing [%s]" % value
-    crawl = Crawler('http://www.google.com/search?hl=en&q=submit+comment&btnG=Google+Search&aq=f&oq=')
-    print "Found %d links" % len(crawl.crawl(doer, depth = 2, style = Crawler.Styles.BREADTH_FIRST))
+    crawler = Crawler('http://www.google.com/search?hl=en&q=submit+comment&btnG=Google+Search&aq=f&oq=')
+    print "Found %d links" % crawler.crawl(doer, depth = 2, style = Crawler.Styles.BREADTH_FIRST)
 if __name__ == '__main__': main()
