@@ -30,8 +30,17 @@ class Browser(object):
         def href_predicate(href):
             reply = True
             if not href: return False
-            if exclude: reply &= bool(not re.search(exclude, href))
-            if require: reply &= bool(re.search(require, href))
+            if type(exclude) == list:
+                reply &= reduce(lambda a, b: a & b,
+                                [bool(not re.search(case, href)) for case in exclude])
+            else:
+                if exclude: reply &= bool(not re.search(exclude, href))
+            
+            if type(require) == list: 
+                reply &= reduce(lambda a, b: a & b,
+                                [bool(not re.search(case, href)) for case in require])
+            else:
+                if require: reply &= bool(re.search(require, href))
             return reply
         
         return BeautifulSoup(page).findAll(
