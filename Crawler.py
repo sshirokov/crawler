@@ -12,6 +12,13 @@ def search_object(object, name = None, value = None):
     if not name and not value: raise Exception("Must search by name or value")
     name, value = matcher(name), matcher(value)
     return [(i, getattr(object, i)) for i in dir(object) if name(i) and value(getattr(object, i))]
+
+def make_chain(*functions, **kwargs):
+    '''Return a function calling all the functions passed in sequence with the given params'''
+    if kwargs.get('merge'): merge = kwargs['merge']
+    else: merge = lambda l: l
+    call_chain = lambda *args, **kwargs: [f(*args, **kwargs) for f in functions]
+    return lambda *args, **kwargs: merge(call_chain(*args, **kwargs))
     
 
 class Crawler(Browser):
