@@ -29,6 +29,7 @@ class Browser(object):
     def links(self, page, exclude = None, require = None):
         def href_predicate(href):
             reply = True
+            if not href: return False
             if exclude: reply &= bool(not re.search(exclude, href))
             if require: reply &= bool(re.search(require, href))
             return reply
