@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import re
+import sys, re
 from Browser import Browser
 
 def search_object(object, name = None, value = None):
@@ -69,5 +69,7 @@ def main():
     def doer(value):
         print "Doing [%s]" % value
     crawler = Crawler('http://www.google.com/search?hl=en&q=submit+comment&btnG=Google+Search&aq=f&oq=')
-    print "Found %d links" % crawler.crawl(doer, depth = 2, style = Crawler.Styles.BREADTH_FIRST)
+    if len(sys.argv) > 1: limit = int(sys.argv[1])
+    else: limit = 1 
+    print "Found %d links" % crawler.crawl(doer, depth = limit, style = Crawler.Styles.BREADTH_FIRST)
 if __name__ == '__main__': main()
