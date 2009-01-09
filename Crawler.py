@@ -26,14 +26,19 @@ class Crawler(Browser):
         DEPTH_FIRST = 1
         BREADTH_FIRST = 2
         
-    def __init__(self, seed):
+    def __init__(self, seed, referer = None):
         super(Crawler, self).__init__()
-        self.addHeader("Host", "www.google.com")
+        self.addHeader("Host", re.match('.+//([^/]+)?/{0,1}.+$', seed).group(1))
         self.addHeader("Accept", "text/html")
-        self.addHeader("Referer", "http://www.google.com")
+        if referer: self.addHeader("Referer", referer)
 
-        self.request("http://www.google.com") #TODO: Extract from seed
         self.seed = seed
+
+        self.request = make_chain(self.request, self.update_referer, merge = lambda returns: returns[0])
+        print "Constructed(seed = '%s', referer = '%s')" % (seed, referer)
+        
+    def update_referer(self, url, params = None):
+        self.addHeader("Referer", url)
 
     def crawl(self, do, depth = 1, style = Styles.BREADTH_FIRST):
         if depth <= 0:
@@ -48,14 +53,15 @@ class Crawler(Browser):
         links = self.links(self.request(self.seed),
                           exclude = 'google\.com',
                           require = '^http')
+        links = [link['href'] for link in links if link.get('href')]
             
         if style == self.Styles.BREADTH_FIRST:
             map(do, links)
-            map(lambda link: Crawler(link).crawl(do, depth - 1, style), links)
+            map(lambda link: Crawler(link, referer = self.seed).crawl(do, depth - 1, style), links)
         elif style == self.Styles.DEPTH_FIRST:
             def visit(link):
                 do(link)
-                Crawler(link).crawl(do, depth - 1, style)
+                Crawler(link, referer = self.seed).crawl(do, depth - 1, style)
             map(visit, links)
             
         return list()
@@ -64,5 +70,5 @@ def main():
     def doer(value):
         print "Doing [%s]" % value
     crawl = Crawler('http://www.google.com/search?hl=en&q=submit+comment&btnG=Google+Search&aq=f&oq=')
-    print "Found %d links" % len(crawl.crawl(doer, style = Crawler.Styles.DEPTH_FIRST))
+    print "Found %d links" % len(crawl.crawl(doer, depth = 1, style = Crawler.Styles.BREADTH_FIRST))
 if __name__ == '__main__': main()
