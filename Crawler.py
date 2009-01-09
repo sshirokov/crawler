@@ -31,7 +31,6 @@ class Crawler(Browser):
         self.addHeader("Accept", "text/html")
         if referer: self.addHeader("Referer", referer)
 
-
         self.seed = seed
 
         self.request = make_chain(self.request, self.update_referer, merge = lambda returns: returns[0])
