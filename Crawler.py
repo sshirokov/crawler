@@ -24,10 +24,13 @@ class Crawler(Browser):
     def update_referer(self, url, params = None):
         self.addHeader("Referer", url)
 
-    def crawl(self, do, depth = 1, style = Styles.BREADTH_FIRST):
+    def crawl(self, do, **kwargs):
+        return len(map(do, self.generate(**kwargs)))
+
+    def generate(self, depth = 1, style = Styles.BREADTH_FIRST):
         if depth <= 0:
             print "Exiting recursion with [%s]" % self.seed
-            return 0
+            return
         print "crawling('%(seed)s', depth = %(depth)d, style = %(style)s)" % {
             'seed': self.seed,
             'depth': depth,
@@ -39,30 +42,33 @@ class Crawler(Browser):
                                           'q=cache:',],
                                require = re.compile('^http'))
         except URLError, e:
-            sys.stderr.write("Warning: URL Error(%s) on '%s'" % (e.message, link))
+            sys.stderr.write("Warning: URL Error(%s) on '%s'" % (e, self.seed))
             links = []
         except HTTPError, e:
-            sys.stderr.write("Warning: HTTP Error(%s) on '%s'" % (e.message, link))
+            sys.stderr.write("Warning: HTTP Error(%s) on '%s'" % (e.message, self.seed))
             links = []
             
         links = [link['href'] for link in links if link.get('href')]
             
         if style == self.Styles.BREADTH_FIRST:
-            map(do, links)
-            total = sum(map(lambda link: Crawler(link, referer = self.seed).crawl(do, depth - 1, style), links))
+            for link in links:
+                yield link
+            for link in links:
+                for sublink in Crawler(link, referer = self.seed).generate(depth = depth - 1, style = style):
+                    yield link
         elif style == self.Styles.DEPTH_FIRST:
-            def visit(link):
-                do(link)
-                return Crawler(link, referer = self.seed).crawl(do, depth - 1, style)
-            total = sum(map(visit, links))
-            
-        return len(links) + total
+            for link in links:
+                yield link
+                for sublink in Crawler(link, referer = self.seed).generate(depth = depth - 1, style = style):
+                    yield sublink
         
 def main():
-    def doer(value):
-        print "Doing [%s]" % value
+    def doer(link):
+        #print "Doing [%s]" % link
+        pass
     crawler = Crawler('http://www.google.com/search?hl=en&q=submit+comment&btnG=Google+Search&aq=f&oq=')
     if len(sys.argv) > 1: limit = int(sys.argv[1])
     else: limit = 1 
-    print "Found %d links" % crawler.crawl(doer, depth = limit, style = Crawler.Styles.BREADTH_FIRST)
+    print "Found %d links" % crawler.crawl(do = doer, depth = limit, style = Crawler.Styles.BREADTH_FIRST)
+    print "Generated %d links" % len([link for link in crawler.generate(depth = limit, style = Crawler.Styles.BREADTH_FIRST)])
 if __name__ == '__main__': main()
