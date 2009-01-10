@@ -28,7 +28,8 @@ class Crawler(Browser):
         return len(map(do, self.generate(**kwargs)))
 
     def generate(self, depth = 1, style = Styles.BREADTH_FIRST):
-        if depth <= 0:
+        if depth == None: depth = -1
+        if depth = 0:
             print "Exiting recursion with [%s]" % self.seed
             return
         print "crawling('%(seed)s', depth = %(depth)d, style = %(style)s)" % {
