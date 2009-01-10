@@ -39,27 +39,21 @@ class Crawler(Browser):
                                           'q=cache:',],
                                require = re.compile('^http'))
         except URLError, e:
+            sys.stderr.write("Warning: URL Error(%s) on '%s'" % (e.message, link))
+            links = []
+        except HTTPError, e:
+            sys.stderr.write("Warning: HTTP Error(%s) on '%s'" % (e.message, link))
             links = []
             
         links = [link['href'] for link in links if link.get('href')]
             
         if style == self.Styles.BREADTH_FIRST:
-            def visit(link):
-                try:
-                    return Crawler(link, referer = self.seed).crawl(do, depth - 1, style)
-                except HTTPError, e:
-                    sys.stderr.write("Warning: Error(%s) on '%s'" % (e, link))
-                    return 0
             map(do, links)
-            total = sum(map(visit, links))
+            total = sum(map(lambda link: Crawler(link, referer = self.seed).crawl(do, depth - 1, style), links))
         elif style == self.Styles.DEPTH_FIRST:
             def visit(link):
                 do(link)
-                try:
-                    return Crawler(link, referer = self.seed).crawl(do, depth - 1, style)
-                except HTTPError, e:
-                    sys.stderr.write("Warning: Error(%s) on '%s'" % (e, link))
-                    return 0
+                return Crawler(link, referer = self.seed).crawl(do, depth - 1, style)
             total = sum(map(visit, links))
             
         return len(links) + total
