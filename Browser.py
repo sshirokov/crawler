@@ -29,19 +29,19 @@ class Browser(object):
 
     def links(self, page, exclude = False, require = None):
         exclude, require = map(lambda m: make_chain(map(matcher, listify(m)),
-                                       merge = lambda returns: reduce(lambda a, b: bool(a) | bool(b), returns, True)),
+                                       merge = lambda returns: reduce(lambda a, b: bool(a) | bool(b), returns, False)),
                                [exclude, require])
-        
+
         return BeautifulSoup(page).findAll(
             name = 'a',
-            href = lambda value: exclude(value))#exclude(value))#require(value))# and not exclude(value))#href_predicate)
+            href = lambda value: value != None and (require(value) and not exclude(value)))
 
     def formInputs(self, page, form_index = 0, exclude = 'srch'):
         if page.__class__ == Tag: form = page
         else: form = self.forms(page, exclude)[form_index]
         return tuple([(i.get('name') or '', i.get('value') or '') for i in form('input')]) or ()
 
-    def request(self, url, params = None):
+    def request(self, url, params = None, timeout = 3):
         if params: params = urllib.urlencode(params)
         req = urllib2.Request(url, params, self.headers)
         return self.opener.open(req).read()

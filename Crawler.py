@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys, re
-from urllib2 import HTTPError
+from urllib2 import HTTPError, URLError
 from Browser import Browser
 from utils import search_object, make_chain
 
@@ -11,6 +11,7 @@ class Crawler(Browser):
         
     def __init__(self, seed, referer = None):
         super(Crawler, self).__init__()
+        print "Constructing header for: [%s]" % seed
         self.addHeader("Host", re.match('.+//([^/]+)?/{0,1}.+$', seed).group(1))
         self.addHeader("Accept", "text/html")
         if referer: self.addHeader("Referer", referer)
@@ -32,10 +33,14 @@ class Crawler(Browser):
             'depth': depth,
             'style': list(search_object(self.Styles, value = style).pop())[0]
         }
-        links = self.links(self.request(self.seed),
-                          exclude = ['google.com',
-                                     'q=cache:',],
-                          require = re.compile('^http'))
+        try:
+            links = self.links(self.request(self.seed),
+                               exclude = ['google.com',
+                                          'q=cache:',],
+                               require = re.compile('^http'))
+        except URLError, e:
+            links = []
+            
         links = [link['href'] for link in links if link.get('href')]
             
         if style == self.Styles.BREADTH_FIRST:

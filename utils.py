@@ -5,8 +5,8 @@ def matcher(searcher):
         if callable(searcher): return searcher
         if searcher in (None, True): return lambda value: True
         if searcher == False: return lambda value: False
-        if type(searcher) == type(re.compile('')): return lambda value: re.match(searcher, value)
-        if str(searcher) == searcher: return lambda value: searcher in value
+        if type(searcher) == type(re.compile('')): return lambda value: searcher.match(value)
+        if type(searcher) in (str, unicode): return lambda value: searcher in value
         else: return lambda value: searcher == value
 
 def search_object(object, name = None, value = None):
