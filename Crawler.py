@@ -29,7 +29,7 @@ class Crawler(Browser):
 
     def generate(self, depth = 1, style = Styles.BREADTH_FIRST):
         if depth == None: depth = -1
-        if depth = 0:
+        if depth == 0:
             print "Exiting recursion with [%s]" % self.seed
             return
         print "crawling('%(seed)s', depth = %(depth)d, style = %(style)s)" % {
