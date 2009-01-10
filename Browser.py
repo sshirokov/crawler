@@ -3,6 +3,7 @@ import os, sys, re
 import urllib
 import urllib2
 from BeautifulSoup import BeautifulSoup, Tag
+from utils import matcher, listify, make_chain
 
 class Browser(object):
     def __init__(self, ua = None):
@@ -26,26 +27,14 @@ class Browser(object):
             action = lambda value: exclude == None or not re.search(exclude, value, re.IGNORECASE)
         )
 
-    def links(self, page, exclude = None, require = None):
-        def href_predicate(href):
-            reply = True
-            if not href: return False
-            if type(exclude) == list:
-                reply &= reduce(lambda a, b: a & b,
-                                [bool(not re.search(case, href)) for case in exclude])
-            else:
-                if exclude: reply &= bool(not re.search(exclude, href))
-            
-            if type(require) == list: 
-                reply &= reduce(lambda a, b: a & b,
-                                [bool(not re.search(case, href)) for case in require])
-            else:
-                if require: reply &= bool(re.search(require, href))
-            return reply
+    def links(self, page, exclude = False, require = None):
+        exclude, require = map(lambda m: make_chain(map(matcher, listify(m)),
+                                       merge = lambda returns: reduce(lambda a, b: bool(a) | bool(b), returns, True)),
+                               [exclude, require])
         
         return BeautifulSoup(page).findAll(
             name = 'a',
-            href = href_predicate)
+            href = lambda value: exclude(value))#exclude(value))#require(value))# and not exclude(value))#href_predicate)
 
     def formInputs(self, page, form_index = 0, exclude = 'srch'):
         if page.__class__ == Tag: form = page

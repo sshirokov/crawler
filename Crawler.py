@@ -33,9 +33,9 @@ class Crawler(Browser):
             'style': list(search_object(self.Styles, value = style).pop())[0]
         }
         links = self.links(self.request(self.seed),
-                          exclude = ['google\.com',
+                          exclude = ['google.com',
                                      'q=cache:',],
-                          require = '^http')
+                          require = re.compile('^http'))
         links = [link['href'] for link in links if link.get('href')]
             
         if style == self.Styles.BREADTH_FIRST:
