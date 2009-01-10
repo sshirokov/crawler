@@ -22,9 +22,10 @@ class Browser(object):
         return self.headers.pop(name)
         
     def forms(self, page, exclude = 'srch'):
+        exclude = matcher(exclude)
         return BeautifulSoup(page).findAll(
             name = 'form',
-            action = lambda value: exclude == None or not re.search(exclude, value, re.IGNORECASE)
+            action = lambda value: not exclude(value)
         )
 
     def links(self, page, exclude = False, require = None):
